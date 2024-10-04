@@ -1,20 +1,23 @@
 // import reactLogo from './assets/react.svg';
 // import viteLogo from '/vite.svg';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './App.css';
 import Note from './components/Note';
 import Notification from './components/Notification';
+import LoginForm from './components/LoginForm';
+import Togglable from './components/Togglable';
+import NoteForm from './components/NoteForm';
 import noteService from './services/notes';
 import loginService from './services/login';
 
 function App() {
   const [notes, setNotes] = useState([]);
-  const [newNote, setNewNote] = useState('');
   const [showAll, setShowAll] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [user, setUser] = useState(null);
+  const [loginVisible, setLoginVisible] = useState(false);
 
   const hook = () => {
     noteService.getAll().then((initialNotes) => {
@@ -33,6 +36,8 @@ function App() {
       noteService.setToken(user.token);
     }
   }, []); // El array vacío como parámetro del effect hook asegura que el hook se ejecute solo cuando el componente es renderizado por primera vez.
+
+  const noteFormRef = useRef();
 
   const handleLogin = async (event) => {
     event.preventDefault();
@@ -53,23 +58,23 @@ function App() {
     }
   };
 
-  const handleNoteChange = (event) => {
-    setNewNote(event.target.value);
+  const hanldeLogout = () => {
+    window.localStorage.removeItem('loggedNoteappUser');
+    window.location.reload();
   };
 
-  const addNote = (event) => {
-    event.preventDefault();
-    const newObject = {
-      //id: notes.length + 1,
-      content: newNote,
-      important: Math.random() > 0.5,
-    };
-
-    noteService.create(newObject).then((returnedNote) => {
+  const addNote = (noteObject) => {
+    noteFormRef.current.toggleVisibility();
+    noteService.create(noteObject).then((returnedNote) => {
       setNotes(notes.concat(returnedNote));
-      setNewNote('');
     });
   };
+
+  const noteForm = () => (
+    <Togglable buttonLabel={'New note'} ref={noteFormRef}>
+      <NoteForm createNote={addNote} />
+    </Togglable>
+  );
 
   const toggleImportance = (id) => {
     const note = notes.find((n) => n.id === id);
@@ -90,39 +95,28 @@ function App() {
     ? notes
     : notes.filter((note) => note.important);
 
-  const loginForm = () => (
-    <form onSubmit={handleLogin}>
-      <div>
-        username{' '}
-        <input
-          type='text'
-          name='Username'
-          id='username'
-          value={username}
-          onChange={({ target }) => setUsername(target.value)}
-        />
-      </div>
-      <div>
-        password{' '}
-        <input
-          type='password'
-          name='Password'
-          id='password'
-          value={password}
-          onChange={({ target }) => setPassword(target.value)}
-        />
-      </div>
-      <br />
-      <button type='submit'>login</button>
-    </form>
-  );
+  const loginForm = () => {
+    const hideWhenVisible = { display: loginVisible ? 'none' : '' };
+    const showWhenVisible = { display: loginVisible ? '' : 'none' };
 
-  const noteForm = () => (
-    <form onSubmit={addNote}>
-      <input value={newNote} onChange={handleNoteChange} />
-      <button type='submit'>save</button>
-    </form>
-  );
+    return (
+      <div>
+        <div style={hideWhenVisible}>
+          <button onClick={() => setLoginVisible(true)}>Log in</button>
+        </div>
+        <div style={showWhenVisible}>
+          <LoginForm
+            handleSubmit={handleLogin}
+            handlePasswordChange={({ target }) => setPassword(target.value)}
+            handleUsernameChange={({ target }) => setUsername(target.value)}
+            password={password}
+            username={username}
+          />
+          <button onClick={() => setLoginVisible(false)}>Cancel</button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <>
@@ -133,6 +127,7 @@ function App() {
         {user !== null && (
           <div>
             <p>{user.name} logged-in</p>
+            <button onClick={hanldeLogout}>Log out</button>
           </div>
         )}
         {user === null && loginForm()}
