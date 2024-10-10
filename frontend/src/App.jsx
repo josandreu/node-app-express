@@ -63,11 +63,17 @@ function App() {
     window.location.reload();
   };
 
-  const addNote = (noteObject) => {
+  const addNote = async (noteObject) => {
     noteFormRef.current.toggleVisibility();
-    noteService.create(noteObject).then((returnedNote) => {
-      setNotes(notes.concat(returnedNote));
-    });
+
+    try {
+      const returnedNote = await noteService.create(noteObject);
+      if (returnedNote) {
+        setNotes(notes.concat(returnedNote));
+      }
+    } catch (error) {
+      setErrorMessage(error.response.statusText);
+    }
   };
 
   const noteForm = () => (
