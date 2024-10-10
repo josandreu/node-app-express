@@ -7,7 +7,7 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 export default [
   {
     files: ['**/*.{js,jsx}'],
-    ignores: ['dist'],
+    ignores: ['dist/**/*', '!node_modules/', '.vite.config.js'],
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
@@ -29,11 +29,20 @@ export default [
       ...react.configs['jsx-runtime'].rules,
       ...reactHooks.configs.recommended.rules,
       'react/jsx-no-target-blank': 'off',
+      indent: ['error', 2],
+      'linebreak-style': ['error', 'unix'],
+      quotes: ['error', 'single'],
+      semi: [2, 'always'],
+      eqeqeq: 'error',
+      'no-trailing-spaces': 'error',
+      'object-curly-spacing': ['error', 'always'],
+      'arrow-spacing': ['error', { before: true, after: true }],
+      'react/prop-types': 0,
+      'no-unused-vars': 0,
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true },
       ],
     },
-    'react/prop-types': false,
   },
 ];
